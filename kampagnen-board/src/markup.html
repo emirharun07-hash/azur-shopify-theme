@@ -1,0 +1,52 @@
+<div class="app" id="app">
+  <aside class="side" id="side" aria-label="Boards">
+    <div class="side-head">
+      <div class="brand">Kampagnen Board<small id="whoami">Live-Arbeitsfläche</small></div>
+      <button class="icon-btn" id="hideSide" title="Seitenleiste ausblenden" aria-label="Seitenleiste ausblenden"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button>
+    </div>
+    <div class="side-label"><span>Boards</span><button class="icon-btn" id="newBoard" title="Neues Board" aria-label="Neues Board"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
+    <ul class="boards" id="boards"></ul>
+    <div class="side-foot" id="sideFoot"><b>Zu zweit arbeiten:</b> Teile diese Seite über „Teilen“ in claude.ai. Wer drin ist, erscheint live mit eigenem Cursor.</div>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="viewport" id="vp">
+      <div class="world" id="world">
+        <svg class="wires" id="wires"></svg>
+      </div>
+    </div>
+    <div class="cursors" id="cursors"></div>
+    <div class="canvas-hint" id="canvasHint" hidden>Doppelklick, um zu schreiben.<br>Oder unten ein Element wählen.</div>
+
+    <div class="topbar">
+      <div class="title-pill glass">
+        <button class="icon-btn" id="showSide" title="Boards zeigen" aria-label="Boards zeigen" hidden><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/></svg></button>
+        <input class="title-input" id="title" aria-label="Name des Boards" spellcheck="false" autocomplete="off">
+        <div class="sync" id="sync"><i></i><span>Gespeichert</span></div>
+      </div>
+      <div class="spacer"></div>
+      <div class="people glass" id="people">
+        <div class="avatars" id="avatars"></div>
+        <button class="share-btn" id="shareBtn">Teilen</button>
+      </div>
+    </div>
+
+    <div class="tools glass" id="tools" role="toolbar" aria-label="Elemente hinzufügen">
+      <button class="tool" data-add="text" title="Text (T)"><svg class="i" viewBox="0 0 24 24"><path d="M5 6.5V5h14v1.5M12 5v14M9 19h6"/></svg>Text</button>
+      <button class="tool" data-add="note" title="Notiz (N)"><svg class="i" viewBox="0 0 24 24"><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4h11A1.5 1.5 0 0 1 19 5.5V14l-5 6H6.5A1.5 1.5 0 0 1 5 18.5z"/><path d="M19 14h-3.5a1.5 1.5 0 0 0-1.5 1.5V20"/></svg>Notiz</button>
+      <button class="tool" data-add="check" title="Checkliste (C)"><svg class="i" viewBox="0 0 24 24"><path d="m4.5 7 1.5 1.5L9 5.5M4.5 15l1.5 1.5L9 13.5M12 7h7.5M12 15h7.5"/></svg>Liste</button>
+      <button class="tool" data-add="link" title="Link (L)"><svg class="i" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Link</button>
+      <button class="tool" data-add="media" title="Bild, Video oder PDF"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>Medien</button>
+      <div class="tool-sep"></div>
+      <button class="tool" data-add="frame" title="Bereich (B)"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="13" rx="3" stroke-dasharray="3 2.4"/><path d="M4 3.5h7"/></svg>Bereich</button>
+    </div>
+    <input type="file" id="fileIn" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,video/mp4,video/webm,application/pdf" multiple hidden>
+
+    <div class="zoom glass" aria-label="Zoom">
+      <button class="icon-btn" id="zOut" title="Verkleinern" aria-label="Verkleinern"><svg class="i" viewBox="0 0 24 24"><path d="M6 12h12"/></svg></button>
+      <button class="val" id="zVal" title="Alles zeigen">100 %</button>
+      <button class="icon-btn" id="zIn" title="Vergrößern" aria-label="Vergrößern"><svg class="i" viewBox="0 0 24 24"><path d="M12 6v12M6 12h12"/></svg></button>
+    </div>
+    <div class="hint" id="hint">Ziehen: Fläche bewegen · <kbd>Shift</kbd> + Ziehen: auswählen<br>Vom Punkt am Rand ziehen: verbinden</div>
+  </main>
+</div>

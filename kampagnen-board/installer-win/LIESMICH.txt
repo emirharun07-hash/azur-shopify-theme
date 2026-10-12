@@ -1,0 +1,42 @@
+KAMPAGNEN BOARD – Windows
+=========================
+
+Installieren
+------------
+1. Die ZIP-Datei mit Rechtsklick > "Alle extrahieren ..." entpacken.
+   (Nicht direkt aus der ZIP heraus starten.)
+2. Im entpackten Ordner "KampagnenBoard" doppelt auf "Installieren.bat" klicken.
+3. Falls Windows "Der Computer wurde durch Windows geschützt" anzeigt:
+   auf "Weitere Informationen" und dann "Trotzdem ausführen" klicken.
+   Das kommt, weil die Datei nicht bei Microsoft registriert ist.
+4. Beim ersten Mal lädt der Installer einmalig etwa 110 MB (die Electron-Laufzeit).
+   Danach startet die App. Sie liegt auf dem Desktop und im Startmenü.
+
+Zu zweit live arbeiten
+----------------------
+In der App oben rechts auf "Teilen" klicken.
+- Wer die Cloud einrichtet: Reiter "Cloud einrichten" und den drei Schritten folgen
+  (kostenloses Konto auf supabase.com, SQL kopieren und ausführen, URL und Schlüssel einfügen).
+  Danach zeigt die App unter "Teilen" einen Einladungscode.
+- Die andere Person installiert die App ebenfalls, klickt auf "Teilen" und gibt
+  im Reiter "Ich habe einen Code" diesen Einladungscode ein.
+Wer den Code hat, kann alle Boards sehen und bearbeiten. Nur an Vertraute weitergeben.
+
+Ohne Cloud speichert die App alles nur auf diesem PC.
+
+Entfernen
+---------
+"Deinstallieren.bat" doppelklicken. Deine Boards bleiben erhalten in
+%APPDATA%\Kampagnen Board
+
+Tastenkürzel
+------------
+Doppelklick auf leere Fläche   Text schreiben
+T / N / C / L / B              Text, Notiz, Checkliste, Link, Bereich
+Ziehen auf leerer Fläche       Fläche bewegen
+Shift + Ziehen                 Mehrere auswählen
+Mausrad                        Zoomen
+Strg + Z / Strg + Y            Rückgängig / Wiederholen
+Strg + D                       Duplizieren
+Entf                           Löschen
+Strg + 0                       Alles zeigen

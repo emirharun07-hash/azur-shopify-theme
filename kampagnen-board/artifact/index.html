@@ -44,7 +44,7 @@
   --f-tint: rgba(255,255,255,.03); color-scheme: dark;
 }
 [hidden] { display: none !important; }
-html, body { height: 100%; }
+html, body { height: 100%; margin: 0; }
 body { background: var(--canvas); color: var(--ink); font-family: var(--font); font-size: 14px; -webkit-font-smoothing: antialiased; overflow: hidden; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
@@ -230,7 +230,7 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 .menu button.danger:hover { background: var(--danger); color: #fff; }
 .menu hr { border: 0; border-top: 1px solid var(--hair); margin: 5px 4px; }
 
-.pop { position: absolute; top: 60px; right: 16px; z-index: 20; width: min(360px, calc(100vw - 32px)); padding: 20px; border-radius: 18px; }
+.pop { box-sizing: border-box; position: absolute; top: 60px; right: 16px; z-index: 20; width: min(360px, calc(100vw - 32px)); padding: 20px; border-radius: 18px; }
 .pop h3 { font-family: var(--font-display); margin: 0 0 8px; font-size: 17px; letter-spacing: -.01em; }
 .pop p, .pop li { color: var(--ink-2); line-height: 1.5; margin: 0; font-size: 13.5px; }
 .pop ol { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 6px; }
@@ -270,6 +270,48 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
   .title-input { width: 14ch; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- Windows-App ---------- */
+.desktop .topbar { right: 150px; top: 6px; }
+.desktop .topbar .spacer { pointer-events: auto; align-self: stretch; -webkit-app-region: drag; }
+.desktop .side-head { -webkit-app-region: drag; }
+.desktop .side-head button, .desktop .topbar button, .desktop .topbar input { -webkit-app-region: no-drag; }
+.desktop .pop { top: 52px; }
+
+.share-desk, .share-desk * { box-sizing: border-box; }
+.share-desk { overflow-x: hidden; display: grid; gap: 12px; width: min(400px, calc(100vw - 32px)); max-height: calc(100% - 80px); overflow-y: auto; }
+.share-desk h3 { margin: 0; }
+.share-desk .row { margin-top: 4px; align-items: center; gap: 8px; }
+.share-desk .spacer { flex: 1; }
+.share-desk .ok.primary { background: var(--accent); color: #fff; }
+.fld { display: grid; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.fld input { width: 100%; height: 34px; border-radius: 9px; border: 1px solid var(--hair-2); background: var(--surface); color: var(--ink); padding: 0 10px; font: inherit; font-size: 13px; font-weight: 400; min-width: 0; }
+.fld input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.fld-row { display: flex; gap: 8px; align-items: center; }
+.swatches { display: flex; gap: 4px; flex: none; }
+.swc { width: 18px; height: 18px; border-radius: 50%; }
+.swc.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ink-3); }
+.btn-s { height: 30px; padding: 0 12px; border-radius: 8px; background: var(--hair); font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.btn-s:hover { background: var(--hair-2); }
+.steps { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.steps .btn-s { margin-top: 6px; display: block; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--hair); border-radius: 10px; padding: 3px; }
+.seg button { height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.note { font-size: 12.5px !important; }
+.err { color: var(--danger) !important; font-size: 13px; }
+.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink); }
+.ok-line { display: flex; align-items: center; gap: 8px; color: var(--ink) !important; }
+.ok-line i { width: 8px; height: 8px; border-radius: 50%; background: #30d158; }
+.link, .link-danger { font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 6px 4px; }
+.link-danger { color: var(--danger); }
+
+/* Link-Vorschau mit Bild (nur in der Windows-App) */
+.t-link.has-img { grid-template-columns: 1fr auto; padding: 0 12px 12px 0; overflow: hidden; }
+.t-link.has-img .lk-img { grid-column: 1 / -1; display: block; width: 100%; aspect-ratio: 1.91; object-fit: cover; background: var(--hair); margin-bottom: 2px; pointer-events: none; }
+.t-link.has-img .lk-mark { display: none; }
+.t-link.has-img .lk-body { padding-left: 14px; }
+.lk-img { display: none; }
 </style>
 
 <div class="app" id="app">
@@ -327,10 +369,138 @@ svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-widt
 
 <script>
 'use strict';
+/* Lokale Speicherung: ein Objekt { pfad: daten }.
+   `adapter` sagt, wohin gespeichert wird (Browser-Speicher oder Datei der Windows-App). */
+window.KBLocal = function KBLocal(adapter) {
+  const docs = adapter.docs || {};
+  const watchers = new Map();
+  const parentOf = (p) => p.slice(0, p.lastIndexOf('/'));
+  const list = (parent) => Object.entries(docs).filter(([p]) => parentOf(p) === parent).map(([p, d]) => [p.slice(p.lastIndexOf('/') + 1), d]);
+  const emit = (parent) => { for (const cb of watchers.get(parent) || []) cb(list(parent)); };
+  let t = 0;
+  const persist = () => { clearTimeout(t); t = setTimeout(() => adapter.save(docs), 250); };
+  window.addEventListener('beforeunload', () => { clearTimeout(t); (adapter.saveNow || adapter.save)(docs); });
+  return {
+    kind: 'local',
+    desktop: !!adapter.desktop,
+    me: adapter.me,
+    canWrite: true,
+    connected: true,
+    savedLabel: adapter.savedLabel || 'Gespeichert',
+    accepts: adapter.accepts,
+    acceptLabel: adapter.acceptLabel,
+    maxBytes: adapter.maxBytes,
+    footHTML: adapter.footHTML,
+    externalImages: !!adapter.desktop,
+    watchColl(parent, cb) {
+      if (!watchers.has(parent)) watchers.set(parent, new Set());
+      watchers.get(parent).add(cb);
+      setTimeout(() => cb(list(parent)));
+      return () => watchers.get(parent)?.delete(cb);
+    },
+    getColl: async (parent) => list(parent),
+    async set(path, data) { docs[path] = JSON.parse(JSON.stringify(data)); persist(); emit(parentOf(path)); },
+    async del(path) { delete docs[path]; persist(); emit(parentOf(path)); },
+    upload: (file) => adapter.upload(file),
+    mediaURL: (src) => adapter.mediaURL(src),
+    linkMeta: adapter.linkMeta,
+    shareUI: adapter.shareUI,
+    allDocs: () => docs,
+  };
+};
+</script>
+<script>
+'use strict';
+/* claude.ai: geteilte Speicherung (db), Live-Anwesenheit (room), Dateien (assets), Personen (user).
+   Ohne claude.ai (lokale Vorschau im Browser) wird im Browser-Speicher gearbeitet. */
+window.KB_BACKEND = async function () {
+  const has = typeof window.claude?.use === 'function';
+  const [db, room, assets, user] = has
+    ? await Promise.all(['db', 'room', 'assets', 'user'].map(n => window.claude.use(n).catch(() => null)))
+    : [null, null, null, null];
+  const ACCEPTS = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'video/mp4', 'video/webm', 'application/pdf'];
+  const ACCEPT_LABEL = 'JPG, PNG, GIF, WebP, SVG, MP4, WebM und PDF';
+
+  if (!db) {
+    let docs = {};
+    try { docs = JSON.parse(localStorage.getItem('kb-local') || '{}'); } catch {}
+    return window.KBLocal({
+      docs,
+      save: (d) => { try { localStorage.setItem('kb-local', JSON.stringify(d)); } catch {} },
+      upload: (file) => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); }),
+      mediaURL: (src) => src,
+      accepts: ACCEPTS, acceptLabel: ACCEPT_LABEL, maxBytes: 4 * 1024 * 1024,
+      savedLabel: 'Nur in diesem Browser',
+      footHTML: '<b>Vorschau-Modus:</b> Ohne claude.ai wird nur in diesem Browser gespeichert und nicht geteilt.',
+      shareUI: (box) => { box.innerHTML = '<h3>Vorschau-Modus</h3><p>Geteilt wird nur in der Version auf claude.ai oder in der Windows-App.</p>'; },
+    });
+  }
+
+  let me = { id: null, name: '', color: '#0071e3', avatar: '' };
+  let canWrite = null;
+  if (user) {
+    try { const m = await user.me(); me = { id: m.id, name: m.name, color: m.color, avatar: m.avatarUrl }; } catch {}
+    try { canWrite = await user.can('data.write'); } catch {}
+  }
+  const fail = (e) => {
+    if (e && e.code === 'revoked') setReadOnly(true);
+    toast('Verbindung zur Speicherung unterbrochen. Lade die Seite neu, falls Änderungen fehlen.');
+  };
+  const profiles = {};
+
+  return {
+    kind: 'claude',
+    me, canWrite,
+    connected: true,
+    savedLabel: 'Gespeichert',
+    accepts: ACCEPTS, acceptLabel: ACCEPT_LABEL, maxBytes: 20 * 1024 * 1024,
+    footHTML: '<b>Zu zweit arbeiten:</b> Teile diese Seite über „Teilen“ in claude.ai. Wer drin ist, erscheint live mit eigenem Cursor.',
+    externalImages: false,
+    watchColl: (path, cb) => db.collection(path).onSnapshot(q => cb(q.docs.map(d => [d.id, d.data()])), fail),
+    getColl: async (path) => (await db.collection(path).get()).docs.map(d => [d.id, d.data()]),
+    set: (path, data) => db.doc(path).set(data),
+    del: (path) => db.doc(path).delete(),
+    async upload(file) {
+      if (!assets) throw { code: 'not_granted' };
+      const type = file.kbType || file.type;
+      const r = await assets.upload(file, file.type === type ? undefined : { type });
+      return 'blob:' + r.id;
+    },
+    mediaURL: (src) => src.startsWith('blob:') ? '/_blob/' + src.slice(5) : src,
+    presence(patch) { if (room) room.presence(patch).catch(() => {}); },
+    onPeers(cb) {
+      if (!room) return;
+      room.onPeers(async (ch) => {
+        const list = ch.peers.filter(p => p.kind === 'viewer');
+        const ids = [...new Set(list.map(p => p.by).filter(Boolean))];
+        if (user && ids.length) { try { Object.assign(profiles, await user.profiles(ids)); } catch {} }
+        cb(list.map(p => ({
+          peer: p.peer, self: p.sameTab, mine: p.isMe, key: p.by || p.peer,
+          name: profiles[p.by]?.name || '', color: profiles[p.by]?.color || p.presence?.color || '',
+          avatar: profiles[p.by]?.avatarUrl || '', presence: p.presence || {}, updatedAt: p.updatedAt,
+        })));
+      }, () => {});
+    },
+    shareUI(box, close) {
+      box.innerHTML = `<h3>Board zu zweit nutzen</h3>
+        <p>Alle Boards hier sind geteilt. Wer diese Seite geöffnet hat, sieht Änderungen sofort und erscheint mit eigenem Cursor.</p>
+        <ol>
+          <li>Oben in claude.ai auf <b>Teilen</b> klicken.</li>
+          <li>Die Person per E-Mail einladen, mit dem Recht <b>Bearbeiter</b>. Nur so kann sie mitschreiben.</li>
+          <li>Sie öffnet den Link und ist live dabei.</li>
+        </ol>
+        <div class="row"><button class="ok">Verstanden</button></div>`;
+      box.querySelector('.ok').onclick = close;
+    },
+  };
+};
+</script>
+<script>
+'use strict';
 /* ================================================================
    Kampagnen Board
-   Daten: db "boards/{b}", "boards/{b}/items/{i}", "boards/{b}/links/{l}"
-   Live:  room-presence { pid, cur:[x,y], sel:[ids], drag:[[id,x,y,w,h]], edit }
+   Daten: "boards/{b}", "boards/{b}/items/{i}", "boards/{b}/links/{l}"
+   Live:  Presence je Person { pid, cur:[x,y], sel:[ids], drag:[[id,x,y,w,h]], edit }
    ================================================================ */
 const $ = (s, r = document) => r.querySelector(s);
 const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
@@ -341,7 +511,6 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 const NOTE_COLORS = ['yellow', 'blue', 'green', 'pink', 'purple', 'gray', 'white'];
 const CHECK_SVG = '<svg viewBox="0 0 12 12"><path d="m2.5 6.2 2.3 2.3 4.7-5"/></svg>';
-const MEDIA_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'video/mp4', 'video/webm', 'application/pdf'];
 
 /* ---------------- Zustand ---------------- */
 const S = {
@@ -355,49 +524,22 @@ const S = {
   me: { id: null, name: '', color: '#0071e3', avatar: '' },
   profiles: {},
 };
-let DB = null, ROOM = null, ASSETS = null, USER = null;
+let B = null; // Speicher-Backend: claude.ai, lokal oder Cloud (siehe backend-*.js)
 
 /* ---------------- Speicher-Schicht ----------------
-   Mit db: echte, geteilte Speicherung. Ohne (lokale Vorschau): localStorage. */
-const local = {
-  data: lsGet('kb-local', {}),
-  subs: new Set(),
-  save() { lsSet('kb-local', this.data); for (const s of this.subs) s(); },
-};
+   Alle Backends liefern dieselbe Schnittstelle, die Oberfläche kennt nur `store`. */
 const store = {
-  watchBoards(cb) {
-    if (DB) return DB.collection('boards').onSnapshot(q => cb(q.docs.map(d => [d.id, d.data()])), dbFail);
-    const run = () => cb(Object.entries(local.data).filter(([p]) => p.split('/').length === 2).map(([p, v]) => [p.split('/')[1], v]));
-    local.subs.add(run); run(); return () => local.subs.delete(run);
-  },
-  watchColl(path, cb) {
-    if (DB) return DB.collection(path).onSnapshot(q => cb(q.docs.map(d => [d.id, d.data()])), dbFail);
-    const n = path.split('/').length + 1;
-    const run = () => cb(Object.entries(local.data).filter(([p]) => p.startsWith(path + '/') && p.split('/').length === n).map(([p, v]) => [p.split('/').pop(), v]));
-    local.subs.add(run); setTimeout(run); return () => local.subs.delete(run);
-  },
-  async set(path, data) {
-    if (DB) return DB.doc(path).set(data);
-    local.data[path] = JSON.parse(JSON.stringify(data)); local.save();
-  },
-  async del(path) {
-    if (DB) return DB.doc(path).delete();
-    delete local.data[path]; local.save();
-  },
-  async upload(file) {
-    if (ASSETS) { const r = await ASSETS.upload(file, MEDIA_TYPES.includes(file.type) ? undefined : { type: guessType(file) }); return 'blob:' + r.id; }
-    if (DB) throw { code: 'not_granted' };
-    return await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); });
-  },
+  watchBoards: (cb) => B.watchColl('boards', cb),
+  watchColl: (path, cb) => B.watchColl(path, cb),
+  getColl: (path) => B.getColl(path),
+  set: (path, data) => B.set(path, data),
+  del: (path) => B.del(path),
+  upload: (file) => B.upload(file),
 };
-const mediaURL = (src) => !src ? '' : src.startsWith('blob:') ? '/_blob/' + src.slice(5) : src;
+const mediaURL = (src) => !src ? '' : B.mediaURL(src);
 function guessType(f) {
   const ext = (f.name.split('.').pop() || '').toLowerCase();
-  return { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', mp4: 'video/mp4', m4v: 'video/mp4', webm: 'video/webm', pdf: 'application/pdf' }[ext] || f.type;
-}
-function dbFail(e) {
-  if (e && e.code === 'revoked') { setReadOnly(true); }
-  toast('Verbindung zur Speicherung unterbrochen. Lade die Seite neu, falls Änderungen fehlen.');
+  return { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', pdf: 'application/pdf' }[ext] || f.type;
 }
 
 /* ---------------- Schreib-Warteschlange ----------------
@@ -420,18 +562,28 @@ async function flush(path) {
   if (w.data !== undefined) flush(path);
   else { W.delete(path); dirty.delete(path); syncState(); }
 }
+// Beim Schließen alles Wartende sofort schreiben.
+window.addEventListener('beforeunload', () => {
+  if (S.editing) endEdit();
+  for (const [path, w] of W) {
+    if (w.data === undefined) continue;
+    clearTimeout(w.timer); const d = w.data; w.data = undefined;
+    try { d === null ? store.del(path) : store.set(path, d); } catch {}
+  }
+});
 function writeFail(e) {
   const c = e && e.code;
   if (c === 'invalid_argument' && !S.readOnlyHinted) { S.readOnlyHinted = true; setReadOnly(true); toast('Du kannst dieses Board nur ansehen. Bitte die Person, die es geteilt hat, dich als „Bearbeiter“ einzuladen.'); }
   else if (c === 'quota_exceeded') toast('Der Speicher ist voll. Lösche alte Boards oder Elemente, dann geht es weiter.');
   else if (c === 'resource_exhausted') toast('Gerade zu viele Änderungen auf einmal. Kurz warten, dann geht es weiter.');
-  else if (c === 'unavailable') toast('Verbindung wackelt. Änderungen werden erneut versucht, sobald du weiterarbeitest.');
+  else if (Date.now() - (writeFail.t || 0) > 8000) { writeFail.t = Date.now(); toast('Eine Änderung konnte nicht gespeichert werden. Prüfe die Internetverbindung, dann einfach weiterarbeiten.'); }
 }
 function syncState() {
   const s = $('#sync');
   const pending = W.size > 0;
-  s.className = 'sync' + (pending ? ' saving' : '') + (!DB ? ' off' : '');
-  s.querySelector('span').textContent = !DB ? 'Nur lokal' : pending ? 'Speichert …' : 'Gespeichert';
+  if (!B) return;
+  s.className = 'sync' + (pending ? ' saving' : '') + (B.connected === false ? ' off' : '');
+  s.querySelector('span').textContent = S.readOnly ? 'Nur ansehen' : B.connected === false ? 'Offline' : pending ? 'Speichert …' : B.savedLabel;
 }
 
 /* ---------------- Board-Pfade ---------------- */
@@ -565,8 +717,7 @@ async function deleteBoard(id) {
   const wasOpen = S.boardId === id;
   // Inhalte zuerst entfernen.
   const take = async (coll) => {
-    if (DB) { const q = await DB.collection(`boards/${id}/${coll}`).get(); return q.docs.map(d => d.id); }
-    return Object.keys(local.data).filter(p => p.startsWith(`boards/${id}/${coll}/`)).map(p => p.split('/').pop());
+    return (await store.getColl(`boards/${id}/${coll}`)).map(([did]) => did);
   };
   try {
     for (const lid of await take('links')) write(`boards/${id}/links/${lid}`, null);
@@ -586,12 +737,9 @@ async function duplicateBoard(id) {
   const b = { ...src, name: src.name + ' Kopie', createdAt: now, updatedAt: now, createdBy: S.me.id || null };
   let items = [], links = [];
   if (id === S.boardId) { items = [...S.items.values()]; links = [...S.links.values()]; }
-  else if (DB) {
-    items = (await DB.collection(`boards/${id}/items`).get()).docs.map(d => ({ ...d.data(), id: d.id }));
-    links = (await DB.collection(`boards/${id}/links`).get()).docs.map(d => ({ ...d.data(), id: d.id }));
-  } else {
-    items = Object.entries(local.data).filter(([p]) => p.startsWith(`boards/${id}/items/`)).map(([, v]) => v);
-    links = Object.entries(local.data).filter(([p]) => p.startsWith(`boards/${id}/links/`)).map(([, v]) => v);
+  else {
+    items = (await store.getColl(`boards/${id}/items`)).map(([did, d]) => ({ ...d, id: did }));
+    links = (await store.getColl(`boards/${id}/links`)).map(([did, d]) => ({ ...d, id: did }));
   }
   write(bPath(nid), b); S.boards.set(nid, b);
   const map = new Map(items.map(it => [it.id, uid()]));
@@ -682,12 +830,13 @@ function buildItem(it) {
       const add = el('button', 'ck-add', '+ Punkt'); add.dataset.act = 'ck-add'; n.appendChild(add); break;
     }
     case 'link': {
+      const img = el('img', 'lk-img'); img.alt = ''; img.draggable = false; img.onerror = () => { img.removeAttribute('src'); n.classList.remove('has-img'); };
       const m = el('div', 'lk-mark'); const b = el('div', 'lk-body');
       const t = el('div', 'lk-title txt'); t.dataset.role = 'title'; t.dataset.ph = 'Titel';
       const u = el('div', 'lk-url txt'); u.dataset.role = 'url'; u.dataset.ph = 'https://…';
       b.append(t, u);
       const a = el('a', 'lk-open', '<svg class="i" viewBox="0 0 24 24"><path d="M8 16 16 8M9.5 8H16v6.5"/></svg>'); a.target = '_blank'; a.rel = 'noopener noreferrer'; a.title = 'Im Browser öffnen'; a.setAttribute('aria-label', 'Link öffnen');
-      n.append(m, b, a); break;
+      n.append(img, m, b, a); break;
     }
     case 'image': { const img = el('img'); img.alt = ''; img.draggable = false; img.onerror = () => missing(n); n.appendChild(img); break; }
     case 'video': {
@@ -751,6 +900,9 @@ function updateItem(n, it0) {
       if (!editing) { setText(n.querySelector('[data-role=title]'), it.title || host || ''); setText(n.querySelector('[data-role=url]'), it.url || ''); }
       const m = n.querySelector('.lk-mark'); m.textContent = (host || '?')[0].toUpperCase(); m.style.setProperty('--lk', hueColor(host || 'x'));
       const a = n.querySelector('.lk-open'); if (/^https?:\/\//i.test(it.url || '')) a.href = it.url; else a.removeAttribute('href');
+      const img = n.querySelector('.lk-img'); const show = !!(B?.externalImages && it.image);
+      if (show && img.getAttribute('src') !== it.image) img.src = it.image;
+      n.classList.toggle('has-img', show && !!img.getAttribute('src'));
       break;
     }
     case 'image': case 'video': {
@@ -862,6 +1014,17 @@ function addItem(type, at, extra = {}) {
   S.sel = new Set([it.id]); S.selLink = null; render();
   return it;
 }
+// Titel und Vorschaubild einer Webseite holen (nur wo das Backend das kann).
+async function enrichLink(id) {
+  const it = S.items.get(id); if (!it || it.type !== 'link' || !B.linkMeta || !/^https?:\/\//.test(it.url || '')) return;
+  if (it.metaFor === it.url) return;
+  const meta = await B.linkMeta(it.url).catch(() => null);
+  const cur = S.items.get(id); if (!cur || cur.url !== it.url) return;
+  const next = { ...cur, metaFor: cur.url };
+  if (meta?.title && (!cur.title || cur.title === hostOf(cur.url))) next.title = meta.title.slice(0, 160);
+  if (meta?.image) next.image = meta.image; else delete next.image;
+  apply([itemChange(id, next)], { record: false });
+}
 function addAndEdit(type) { const it = addItem(type); if (it && type !== 'frame') requestAnimationFrame(() => startEdit(it.id, true)); }
 
 $('#tools').addEventListener('click', (e) => {
@@ -897,13 +1060,13 @@ async function addFiles(files, at) {
   if (!files.length) return;
   let i = 0; const made = [];
   for (const f of files) {
-    const type = MEDIA_TYPES.includes(f.type) ? f.type : guessType(f);
-    if (!MEDIA_TYPES.includes(type)) { toast(`„${f.name}“ geht nicht. Möglich sind JPG, PNG, GIF, WebP, SVG, MP4, WebM und PDF.${/\.mov$/i.test(f.name) ? ' MOV-Videos bitte als MP4 exportieren.' : ''}`); continue; }
-    if (f.size > 20 * 1024 * 1024) { toast(`„${f.name}“ ist größer als 20 MB. Längere Videos am besten als Link einfügen (YouTube, Vimeo, Drive).`); continue; }
+    const type = B.accepts.includes(f.type) ? f.type : guessType(f);
+    if (!B.accepts.includes(type)) { toast(`„${f.name}“ geht nicht. Möglich sind ${B.acceptLabel}.${/\.mov$/i.test(f.name) ? ' MOV-Videos bitte als MP4 exportieren.' : ''}`); continue; }
+    if (f.size > B.maxBytes) { toast(`„${f.name}“ ist größer als ${Math.round(B.maxBytes / 1048576)} MB. Längere Videos am besten als Link einfügen (YouTube, Vimeo, Drive).`); continue; }
     toast(`Lädt „${f.name}“ hoch …`, 60000);
     try {
       const info = await mediaInfo(f);
-      const src = await store.upload(f);
+      const src = await store.upload(Object.defineProperty(f, 'kbType', { value: type, configurable: true }));
       const kind = type.startsWith('image/') ? 'image' : type.startsWith('video/') ? 'video' : 'pdf';
       const w = kind === 'pdf' ? 280 : Math.round(Math.min(kind === 'video' ? 420 : 360, info?.w || 360));
       const extra = { src, name: f.name.slice(0, 120), w };
@@ -913,7 +1076,7 @@ async function addFiles(files, at) {
       hideToast();
     } catch (e) {
       const c = e && e.code;
-      toast(c === 'too_large' ? `„${f.name}“ ist zu groß (maximal 20 MB).` : c === 'unsupported_type' ? `Das Format von „${f.name}“ wird nicht unterstützt.` : c === 'quota_or_state' ? 'Der Speicher für Dateien ist voll. Lösche nicht mehr gebrauchte Medien.' : c === 'not_granted' ? 'Hochladen ist für dich hier nicht freigegeben.' : `„${f.name}“ konnte nicht hochgeladen werden. Bitte nochmal versuchen.`);
+      toast(c === 'too_large' ? `„${f.name}“ ist zu groß (maximal ${Math.round(B.maxBytes / 1048576)} MB).` : c === 'unsupported_type' ? `Das Format von „${f.name}“ wird nicht unterstützt.` : c === 'quota_or_state' ? 'Der Speicher für Dateien ist voll. Lösche nicht mehr gebrauchte Medien.' : c === 'not_granted' ? 'Hochladen ist für dich hier nicht freigegeben.' : `„${f.name}“ konnte nicht hochgeladen werden. Bitte nochmal versuchen.`);
     }
   }
   if (made.length) { S.sel = new Set(made); render(); }
@@ -991,6 +1154,7 @@ function endEdit() {
   if (JSON.stringify(next) !== JSON.stringify(editStart)) {
     S.items.set(id, editStart);
     apply([{ kind: 'item', id, before: editStart, after: next }]);
+    if (next.type === 'link') enrichLink(id);
   } else { S.items.set(id, next); render(); }
 }
 world.addEventListener('input', onEditInput);
@@ -1325,7 +1489,7 @@ document.addEventListener('paste', (e) => {
     } catch {}
     return;
   }
-  if (/^https?:\/\/\S+$/i.test(text)) { addItem('link', null, { url: text, title: hostOf(text) }); return; }
+  if (/^https?:\/\/\S+$/i.test(text)) { const it = addItem('link', null, { url: text, title: hostOf(text) }); if (it) enrichLink(it.id); return; }
   addItem(text.length > 80 || text.includes('\n') ? 'note' : 'text', null, { text });
 });
 let dragDepth = 0; const veil = el('div', 'drop-veil', 'Loslassen zum Einfügen'); veil.hidden = true; $('#stage').appendChild(veil);
@@ -1339,7 +1503,7 @@ $('#stage').addEventListener('drop', (e) => {
   const files = [...(e.dataTransfer?.files || [])];
   if (files.length) return addFiles(files, at);
   const url = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain') || '').trim().split('\n')[0];
-  if (/^https?:\/\//i.test(url)) addItem('link', { x: Math.round(at.x - 150), y: Math.round(at.y - 32) }, { url, title: hostOf(url) });
+  if (/^https?:\/\//i.test(url)) { const it = addItem('link', { x: Math.round(at.x - 150), y: Math.round(at.y - 32) }, { url, title: hostOf(url) }); if (it) enrichLink(it.id); }
   else if (url) addItem('note', { x: Math.round(at.x - 120), y: Math.round(at.y - 30) }, { text: url });
 });
 
@@ -1356,7 +1520,7 @@ function relTime(t) {
 function renderBoards() {
   const ul = $('#boards'); ul.innerHTML = '';
   const where = new Map();
-  for (const p of S.peers) if (!p.sameTab && p.presence?.pid) { if (!where.has(p.presence.pid)) where.set(p.presence.pid, []); where.get(p.presence.pid).push(peerColor(p)); }
+  for (const p of S.peers) if (!p.self && p.presence?.pid) { if (!where.has(p.presence.pid)) where.set(p.presence.pid, []); where.get(p.presence.pid).push(peerColor(p)); }
   for (const [id, b] of sortedBoards()) {
     const li = el('li', 'board' + (id === S.boardId ? ' on' : '')); li.dataset.id = id; li.tabIndex = 0;
     const main = el('div'); main.style.minWidth = '0';
@@ -1454,16 +1618,8 @@ function hideToast() { if (toastEl) toastEl.hidden = true; }
 $('#shareBtn').addEventListener('click', () => {
   if ($('#sharePop')) return $('#sharePop').remove();
   const p = el('div', 'pop glass'); p.id = 'sharePop';
-  p.innerHTML = `<h3>Board zu zweit nutzen</h3>
-    <p>Alle Boards hier sind geteilt. Wer diese Seite geöffnet hat, sieht Änderungen sofort und erscheint mit eigenem Cursor.</p>
-    <ol>
-      <li>Oben in claude.ai auf <b>Teilen</b> klicken.</li>
-      <li>Die Person per E-Mail einladen, mit dem Recht <b>Bearbeiter</b>. Nur so kann sie mitschreiben.</li>
-      <li>Sie öffnet den Link und ist live dabei.</li>
-    </ol>
-    <div class="row"><button class="ok">Verstanden</button></div>`;
-  p.querySelector('.ok').onclick = () => p.remove();
   $('#stage').appendChild(p);
+  B.shareUI(p, () => p.remove());
 });
 function showEmpty() {
   if ($('#empty')) return;
@@ -1488,45 +1644,42 @@ window.addEventListener('resize', () => { placeFbar(); renderCursors(); });
 let presState = {};
 function presence(patch) {
   Object.assign(presState, patch);
-  if (ROOM) ROOM.presence(patch).catch(() => {});
+  if (B?.presence) B.presence(patch);
 }
 function syncSelPresence() { presence({ sel: [...S.sel].slice(0, 60), pid: S.boardId }); }
-function peerColor(p) { return S.profiles[p.by]?.color || p.presence?.color || hueColor(p.peer); }
-function peerName(p) { return S.profiles[p.by]?.name || 'Gast'; }
-async function onPeers(ch) {
-  S.peers = ch.peers.filter(p => p.kind === 'viewer');
-  const ids = [...new Set(S.peers.map(p => p.by).filter(Boolean))];
-  if (USER && ids.length) { try { Object.assign(S.profiles, await USER.profiles(ids)); } catch {} }
+// Jede Person: { peer, self, mine, key, name, color, avatar, presence, updatedAt }
+const peerColor = (p) => p.color || hueColor(p.peer);
+const peerName = (p) => p.name || 'Gast';
+function onPeers(peers) {
+  S.peers = peers;
   // Live-Bewegungen anderer übernehmen
   const now = Date.now(); const touched = new Set();
   for (const p of S.peers) {
-    if (p.sameTab || p.presence?.pid !== S.boardId || !Array.isArray(p.presence.drag)) continue;
-    for (const d of p.presence.drag) { if (!Array.isArray(d)) continue; const [id, x, y, w, h] = d; if (typeof id !== 'string' || !S.items.has(id) || (drag && drag.ids?.has(id))) continue;
+    if (p.self || p.presence?.pid !== S.boardId || !Array.isArray(p.presence.drag)) continue;
+    for (const d of p.presence.drag) { if (!Array.isArray(d)) continue; const [id, x, y, w, h] = d; if (typeof id !== 'string' || !S.items.has(id) || (drag && drag.starts?.has(id))) continue;
       S.peerDrag.set(id, { x: +x, y: +y, w: w == null ? undefined : +w, h: h == null ? undefined : +h, t: now }); touched.add(id); }
   }
   for (const id of touched) { const n = itemEls.get(id); if (n) updateItem(n, S.items.get(id)); }
   if (touched.size) renderWires();
   renderCursors();
-  const sig = JSON.stringify(S.peers.map(p => [p.peer, p.by, p.presence?.pid, p.presence?.sel, p.presence?.edit, S.profiles[p.by]?.name]));
+  const sig = JSON.stringify(S.peers.map(p => [p.peer, p.name, p.color, p.presence?.pid, p.presence?.sel, p.presence?.edit]));
   if (sig !== onPeers.sig) { onPeers.sig = sig; renderAvatars(); renderPeerMarks(); if (!document.querySelector('.b-rename')) renderBoards(); }
 }
-function others() { return S.peers.filter(p => !p.sameTab); }
+function others() { return S.peers.filter(p => !p.self); }
 function renderAvatars() {
   const box = $('#avatars'); box.innerHTML = '';
   const seen = new Set(); const list = [];
-  for (const p of S.peers) { const key = p.by || p.peer; if (seen.has(key)) continue; seen.add(key); list.push(p); }
-  list.sort((a, b) => (b.sameTab ? 1 : 0) - (a.sameTab ? 1 : 0));
+  for (const p of [...S.peers].sort((a, b) => (b.self ? 1 : 0) - (a.self ? 1 : 0))) { const key = p.key || p.peer; if (seen.has(key)) continue; seen.add(key); list.push(p); }
   for (const p of list.slice(0, 6)) {
     const b = el('button'); b.style.setProperty('--pc', peerColor(p));
-    const prof = S.profiles[p.by];
-    const name = p.sameTab || p.isMe ? 'Du' : peerName(p);
+    const name = p.self || p.mine ? 'Du' : peerName(p);
     const here = p.presence?.pid === S.boardId;
-    b.title = name + (p.sameTab ? '' : here ? ' – in diesem Board' : ' – in einem anderen Board');
+    b.title = name + (p.self ? '' : here ? ' – in diesem Board' : ' – in einem anderen Board');
     b.setAttribute('aria-label', b.title);
-    if (prof?.avatarUrl) { const img = el('img'); img.src = prof.avatarUrl; img.alt = ''; b.appendChild(img); }
-    else b.textContent = (name[0] || '?').toUpperCase();
-    if (!p.sameTab) b.onclick = () => followPeer(p.peer);
-    if (!here && !p.sameTab) b.style.opacity = .5;
+    if (p.avatar) { const img = el('img'); img.src = p.avatar; img.alt = ''; b.appendChild(img); }
+    else b.textContent = ((p.self ? p.name : name) || '?')[0].toUpperCase();
+    if (!p.self) b.onclick = () => followPeer(p.peer);
+    if (!here && !p.self) b.style.opacity = .5;
     box.appendChild(b);
   }
   $('#people').querySelector('.avatars').hidden = list.length === 0;
@@ -1575,24 +1728,18 @@ setInterval(() => { // abgelaufene Live-Positionen aufräumen
 
 /* ---------------- Start ---------------- */
 async function boot() {
-  syncState(); applyView();
-  const has = typeof window.claude?.use === 'function';
-  const [db, room, assets, user] = has ? await Promise.all(['db', 'room', 'assets', 'user'].map(n => window.claude.use(n).catch(() => null))) : [null, null, null, null];
-  DB = db; ROOM = room; ASSETS = assets; USER = user;
-  S.online = !!DB;
-  if (USER) {
-    try { const me = await USER.me(); S.me = { id: me.id, name: me.name, color: me.color, avatar: me.avatarUrl }; if (me.name) $('#whoami').textContent = me.name; } catch {}
-    try { const can = await USER.can('data.write'); if (can === false) setReadOnly(true); } catch {}
-  }
-  if (DB && !ASSETS) { /* Lesende ohne Upload-Recht */ }
-  if (ROOM) {
-    ROOM.onPeers(onPeers, () => {});
-    ROOM.presence({ ...presState, color: S.me.color || null }).catch(() => {});
-  } else { $('#shareBtn').hidden = !DB; }
-  if (!DB) $('#sideFoot').innerHTML = '<b>Vorschau-Modus:</b> Ohne claude.ai wird nur in diesem Browser gespeichert und nicht geteilt.';
+  applyView();
+  B = await window.KB_BACKEND();
+  if (B.desktop) document.documentElement.classList.add('desktop');
+  S.me = { id: B.me?.id || null, name: B.me?.name || '', color: B.me?.color || '#0071e3' };
+  if (B.me?.name) $('#whoami').textContent = B.me.name;
+  if (B.canWrite === false) setReadOnly(true);
+  $('#fileIn').accept = B.accepts.join(',');
+  $('#sideFoot').innerHTML = B.footHTML;
+  if (B.onPeers) B.onPeers(onPeers);
+  presence({ ...presState, color: S.me.color || null });
   syncState();
-  let first = true;
-  store.watchBoards((list) => { boardsSnapshot(list); if (first) { first = false; } });
+  store.watchBoards((list) => boardsSnapshot(list));
 }
 boot();
 </script>

@@ -1,0 +1,16 @@
+{
+  "name": "kampagnen-board",
+  "productName": "Kampagnen Board",
+  "version": "1.0.0",
+  "description": "Freie Arbeitsfläche für kreative Kampagnen, live zu zweit.",
+  "main": "main.js",
+  "author": "emirharun07",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "33.4.11"
+  }
+}
