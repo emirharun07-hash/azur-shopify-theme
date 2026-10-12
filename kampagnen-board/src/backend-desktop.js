@@ -20,6 +20,13 @@ window.KB_BACKEND = async function () {
   const localMedia = (src) => src.startsWith('file:') ? local.assetsBase + encodeURIComponent(src.slice(5)) : src;
   const shareUI = (box, close) => desktopShareUI(box, close, settings);
 
+  // Ist im Installer eine Cloud hinterlegt, verbindet sich die App von selbst (außer man hat sie getrennt).
+  if (!settings.cloud && !settings.noDefaultCloud && info.defaultCloud?.url && info.defaultCloud?.key) {
+    settings.cloud = { url: info.defaultCloud.url, key: info.defaultCloud.key };
+    const hasLocal = Object.keys(local.docs).some(p => p.split('/').length === 2);
+    if (hasLocal) { try { await migrate(settings.cloud, local.docs); } catch (e) { console.error('Übertragen fehlgeschlagen', e); } }
+    await D.setSettings(settings);
+  }
   if (settings.cloud?.url && settings.cloud?.key) {
     return window.KBCloud({ url: settings.cloud.url, key: settings.cloud.key, me, base: { mediaURL: localMedia, linkMeta: D.linkMeta, shareUI } });
   }
@@ -108,9 +115,9 @@ function desktopShareUI(box, close, settings) {
       readMe(box, settings);
       if (box.querySelector('#migrate').checked && hasLocal) {
         e.target.textContent = 'Überträgt Boards …';
-        try { await migrate(cfg); } catch (x) { err.textContent = 'Übertragen fehlgeschlagen: ' + (x.message || x); err.hidden = false; e.target.disabled = false; e.target.textContent = 'Verbinden'; return; }
+        try { await migrate(cfg, B.allDocs()); } catch (x) { err.textContent = 'Übertragen fehlgeschlagen: ' + (x.message || x); err.hidden = false; e.target.disabled = false; e.target.textContent = 'Verbinden'; return; }
       }
-      settings.cloud = cfg; await window.desktop.setSettings(settings);
+      settings.cloud = cfg; delete settings.noDefaultCloud; await window.desktop.setSettings(settings);
       location.reload();
     };
   }
@@ -124,7 +131,7 @@ function desktopShareUI(box, close, settings) {
     box.querySelector('#disconnect').onclick = async () => {
       const ok = await confirmBox('Verbindung trennen?', 'Die Boards bleiben in der Cloud. Die App zeigt danach wieder die Boards auf diesem PC.', 'Trennen');
       if (!ok) return;
-      delete settings.cloud; await window.desktop.setSettings(settings); location.reload();
+      delete settings.cloud; settings.noDefaultCloud = true; await window.desktop.setSettings(settings); location.reload();
     };
   }
 }
@@ -139,9 +146,9 @@ async function copy(text, btn, done) {
   const old = btn.textContent; btn.textContent = done; setTimeout(() => btn.textContent = old, 1600);
 }
 // Lokale Boards (inklusive Bilder und Videos) in die Cloud übertragen.
-async function migrate(cfg) {
+async function migrate(cfg, localDocs) {
   const sb = window.supabase.createClient(cfg.url, cfg.key, { auth: { persistSession: false } });
-  const docs = JSON.parse(JSON.stringify(B.allDocs()));
+  const docs = JSON.parse(JSON.stringify(localDocs));
   for (const [path, d] of Object.entries(docs)) {
     if (typeof d.src === 'string' && d.src.startsWith('file:')) {
       const bytes = await window.desktop.assetRead(d.src);

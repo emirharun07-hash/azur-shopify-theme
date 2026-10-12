@@ -1,3 +1,4 @@
 desktop/node_modules/
 desktop/renderer/
 *.zip
+desktop/default-cloud.json

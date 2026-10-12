@@ -25,13 +25,18 @@ window.KBCloud = function KBCloud({ url, key, me, base }) {
     return out;
   }
   async function refresh(parent) {
-    try { cache.set(parent, await load(parent)); emit(parent); setConn(true); }
+    try {
+      const fresh = await load(parent); const old = cache.get(parent);
+      const same = old && old.size === fresh.size && JSON.stringify([...old]) === JSON.stringify([...fresh]);
+      cache.set(parent, fresh); if (!same) emit(parent); setConn(true);
+    }
     catch { setConn(false); }
   }
   function setConn(v) { if (api.connected !== v) { api.connected = v; syncState(); } }
 
-  // Änderungen anderer, live
-  let wasDown = false;
+  // Änderungen anderer, live. Blockiert ein Netzwerk WebSockets, wird stattdessen alle 4 Sekunden nachgefragt.
+  let wasDown = false, live = false;
+  const setLive = (v) => { if (live !== v) { live = v; syncState(); } };
   sb.channel('kb-docs')
     .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, (p) => {
       const row = p.eventType === 'DELETE' ? p.old : p.new;
@@ -41,11 +46,12 @@ window.KBCloud = function KBCloud({ url, key, me, base }) {
       emit(parent);
     })
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') { setConn(true); if (wasDown) for (const parent of watchers.keys()) refresh(parent); wasDown = false; }
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') { wasDown = true; setConn(false); }
+      if (status === 'SUBSCRIBED') { setLive(true); if (wasDown) for (const parent of watchers.keys()) refresh(parent); wasDown = false; }
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') { wasDown = true; setLive(false); }
     });
   // Sicherheitsnetz, falls ein Ereignis verloren geht
   setInterval(() => { if (document.visibilityState === 'visible') for (const parent of watchers.keys()) refresh(parent); }, 60000);
+  setInterval(() => { if (!live && document.visibilityState === 'visible') for (const parent of watchers.keys()) refresh(parent); }, 4000);
   window.addEventListener('focus', () => { for (const parent of watchers.keys()) refresh(parent); });
 
   // Anwesenheit: jede offene App sendet ihren Zustand (Cursor, Board, Auswahl)
@@ -81,12 +87,12 @@ window.KBCloud = function KBCloud({ url, key, me, base }) {
 
   return Object.assign(api, {
     kind: 'cloud', desktop: true, me, canWrite: true,
-    get savedLabel() { return 'In der Cloud gespeichert'; },
+    get savedLabel() { return live ? 'Live verbunden' : 'Gespeichert · Live getrennt'; },
     accepts: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'video/mp4', 'video/webm', 'video/quicktime', 'application/pdf'],
     acceptLabel: 'JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM und PDF',
     maxBytes: 50 * 1024 * 1024,
     externalImages: true,
-    footHTML: '<b>Live verbunden:</b> Wer deinen Einladungscode hat, sieht diese Boards und arbeitet mit dir live darin.',
+    footHTML: '<b>Mit eurer Cloud verbunden.</b> Alle, die die App mit dieser Cloud nutzen, sehen diese Boards und arbeiten live mit.',
     watchColl(parent, cb) {
       if (!watchers.has(parent)) watchers.set(parent, new Set());
       watchers.get(parent).add(cb);

@@ -7,7 +7,12 @@ python3 "$ROOT/scripts/build.py" >/dev/null
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 D="$TMP/KampagnenBoard"
 mkdir -p "$D/setup" "$D/app"
+# Optional eine Cloud fest hinterlegen (nur in der ZIP, nie im Repository):
+#   KB_CLOUD_URL=https://xyz.supabase.co KB_CLOUD_KEY=eyJ... ./scripts/make-installer-zip.sh
 cp -R "$ROOT/desktop/main.js" "$ROOT/desktop/preload.js" "$ROOT/desktop/package.json" "$ROOT/desktop/renderer" "$ROOT/desktop/build" "$D/app/"
+if [ -n "${KB_CLOUD_URL:-}" ] && [ -n "${KB_CLOUD_KEY:-}" ]; then
+  printf '{"url":"%s","key":"%s"}\n' "$KB_CLOUD_URL" "$KB_CLOUD_KEY" > "$D/app/default-cloud.json"
+fi
 python3 - "$ROOT/installer-win" "$D" <<'PY'
 import sys, pathlib
 src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])

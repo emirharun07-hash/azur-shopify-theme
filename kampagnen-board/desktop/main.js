@@ -73,7 +73,7 @@ function createWindow() {
 nativeTheme.on('updated', () => { if (win && !win.isDestroyed()) win.setTitleBarOverlay(overlay()); });
 app.on('second-instance', () => { if (!win) return; if (win.isMinimized()) win.restore(); win.focus(); });
 
-ipcMain.handle('app:info', () => ({ username: os.userInfo().username, platform: process.platform, version: app.getVersion() }));
+ipcMain.handle('app:info', () => ({ username: os.userInfo().username, platform: process.platform, version: app.getVersion(), defaultCloud: readJSON(path.join(__dirname, 'default-cloud.json')) }));
 ipcMain.handle('settings:get', () => readJSON(file('settings.json')) || {});
 ipcMain.handle('settings:set', (_e, s) => { writeAtomic(file('settings.json'), JSON.stringify(s, null, 2)); return true; });
 
