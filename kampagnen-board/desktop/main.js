@@ -1,6 +1,6 @@
-// Kampagnen Board – Windows-App (Hauptprozess)
+// Kampagnen Board – App für Windows und Mac (Hauptprozess)
 // Fenster, Einstellungen, lokale Speicherung (data.json + Ordner "assets") und Link-Vorschauen.
-const { app, BrowserWindow, ipcMain, nativeTheme, shell, net } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeTheme, shell, net, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -14,6 +14,7 @@ const userDir = () => app.getPath('userData');
 const file = (n) => path.join(userDir(), n);
 const assetsDir = () => file('assets');
 let win;
+const isMac = process.platform === 'darwin';
 
 function readJSON(f) { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return null; } }
 function writeAtomic(f, text) {
@@ -38,13 +39,13 @@ function createWindow() {
     title: 'Kampagnen Board',
     icon: path.join(__dirname, 'build', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#161617' : '#fbfbfd',
-    titleBarStyle: 'hidden',
-    titleBarOverlay: overlay(),
+    // Mac: eigene Ampel-Knöpfe im Fenster. Windows: Fensterknöpfe oben rechts über der Fläche.
+    ...(isMac ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 18 } } : { titleBarStyle: 'hidden', titleBarOverlay: overlay() }),
     show: false,
     webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true, spellcheck: true },
   });
   if (saved.maximized) win.maximize();
-  win.removeMenu();
+  if (!isMac) win.removeMenu();
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
   win.once('ready-to-show', () => win.show());
 
@@ -62,7 +63,7 @@ function createWindow() {
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type !== 'keyDown') return;
     if (input.key === 'F12') win.webContents.toggleDevTools();
-    if (input.key === 'F5' || (input.control && input.key.toLowerCase() === 'r')) { e.preventDefault(); win.webContents.reload(); }
+    if (input.key === 'F5' || ((input.control || input.meta) && input.key.toLowerCase() === 'r')) { e.preventDefault(); win.webContents.reload(); }
   });
   win.on('close', () => {
     if (win.isMinimized()) return;
@@ -70,7 +71,31 @@ function createWindow() {
   });
 }
 
-nativeTheme.on('updated', () => { if (win && !win.isDestroyed()) win.setTitleBarOverlay(overlay()); });
+nativeTheme.on('updated', () => { if (!isMac && win && !win.isDestroyed()) win.setTitleBarOverlay(overlay()); });
+
+// Mac braucht ein Menü, sonst gehen Kopieren/Einfügen in Textfeldern nicht.
+// Rückgängig, Wiederholen und Alles auswählen entscheidet die Oberfläche selbst (Text oder Board).
+function buildMacMenu() {
+  const send = (cmd) => () => win?.webContents.send('menu', cmd);
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { role: 'appMenu' },
+    { label: 'Ablage', submenu: [{ label: 'Neues Board', accelerator: 'Cmd+N', click: send('new-board') }, { type: 'separator' }, { role: 'close' }] },
+    { label: 'Bearbeiten', submenu: [
+      { label: 'Widerrufen', accelerator: 'Cmd+Z', click: send('undo') },
+      { label: 'Wiederholen', accelerator: 'Shift+Cmd+Z', click: send('redo') },
+      { type: 'separator' },
+      { role: 'cut', label: 'Ausschneiden' }, { role: 'copy', label: 'Kopieren' }, { role: 'paste', label: 'Einfügen' },
+      { label: 'Alles auswählen', accelerator: 'Cmd+A', click: send('select-all') },
+    ] },
+    { label: 'Darstellung', submenu: [
+      { label: 'Alles zeigen', accelerator: 'Cmd+0', click: send('fit') },
+      { label: 'Vergrößern', accelerator: 'Cmd+Plus', click: send('zoom-in') },
+      { label: 'Verkleinern', accelerator: 'Cmd+-', click: send('zoom-out') },
+      { type: 'separator' }, { role: 'togglefullscreen', label: 'Vollbild' },
+    ] },
+    { role: 'windowMenu', label: 'Fenster' },
+  ]));
+}
 app.on('second-instance', () => { if (!win) return; if (win.isMinimized()) win.restore(); win.focus(); });
 
 ipcMain.handle('app:info', () => ({ username: os.userInfo().username, platform: process.platform, version: app.getVersion(), defaultCloud: readJSON(path.join(__dirname, 'default-cloud.json')) }));
@@ -125,5 +150,6 @@ ipcMain.handle('link:meta', async (_e, url) => {
   } catch { return null; }
 });
 
-app.whenReady().then(createWindow);
-app.on('window-all-closed', () => app.quit());
+app.whenReady().then(() => { if (isMac) buildMacMenu(); createWindow(); });
+app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
+app.on('window-all-closed', () => { if (!isMac) app.quit(); });

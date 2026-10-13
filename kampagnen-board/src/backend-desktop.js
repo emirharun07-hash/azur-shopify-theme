@@ -19,6 +19,7 @@ window.KB_BACKEND = async function () {
   const ACCEPTS = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml', 'video/mp4', 'video/webm', 'video/quicktime', 'application/pdf'];
   const localMedia = (src) => src.startsWith('file:') ? local.assetsBase + encodeURIComponent(src.slice(5)) : src;
   const shareUI = (box, close) => desktopShareUI(box, close, settings);
+  const device = info.platform === 'darwin' ? 'Mac' : 'PC';
 
   // Ist im Installer eine Cloud hinterlegt, verbindet sich die App von selbst (außer man hat sie getrennt).
   if (!settings.cloud && !settings.noDefaultCloud && info.defaultCloud?.url && info.defaultCloud?.key) {
@@ -28,9 +29,9 @@ window.KB_BACKEND = async function () {
     await D.setSettings(settings);
   }
   if (settings.cloud?.url && settings.cloud?.key) {
-    return window.KBCloud({ url: settings.cloud.url, key: settings.cloud.key, me, base: { mediaURL: localMedia, linkMeta: D.linkMeta, shareUI } });
+    return Object.assign(window.KBCloud({ url: settings.cloud.url, key: settings.cloud.key, me, base: { mediaURL: localMedia, linkMeta: D.linkMeta, shareUI } }), { platform: info.platform });
   }
-  return window.KBLocal({
+  return Object.assign(window.KBLocal({
     desktop: true, me, docs: local.docs,
     save: (docs) => D.saveLocal(JSON.stringify(docs)),
     saveNow: (docs) => D.saveLocalSync(JSON.stringify(docs)),
@@ -38,10 +39,10 @@ window.KB_BACKEND = async function () {
     mediaURL: localMedia,
     linkMeta: D.linkMeta,
     accepts: ACCEPTS, acceptLabel: 'JPG, PNG, GIF, WebP, SVG, MP4, MOV, WebM und PDF', maxBytes: 1024 * 1024 * 1024,
-    savedLabel: 'Auf diesem PC gespeichert',
-    footHTML: '<b>Nur auf diesem PC.</b> Über „Teilen“ verbindest du die App mit deiner Cloud und arbeitest live zu zweit.',
+    savedLabel: `Auf diesem ${device} gespeichert`,
+    footHTML: `<b>Nur auf diesem ${device}.</b> Über „Teilen“ verbindest du die App mit deiner Cloud und arbeitest live zu zweit.`,
     shareUI,
-  });
+  }), { platform: info.platform });
 };
 
 const encodeInvite = (url, key) => 'KB1.' + btoa(unescape(encodeURIComponent(JSON.stringify({ u: url, k: key })))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -87,7 +88,7 @@ function desktopShareUI(box, close, settings) {
         <label class="fld"><span>anon public key</span><input id="sbKey" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false"></label>
       </div>
       ${nameRow}
-      <label class="chk"><input type="checkbox" id="migrate" checked> Meine Boards von diesem PC mitnehmen</label>
+      <label class="chk"><input type="checkbox" id="migrate" checked> Meine Boards von diesem Gerät mitnehmen</label>
       <p class="err" id="err" hidden></p>
       <div class="row"><button class="link" id="cancel">Abbrechen</button><span class="spacer"></span><button class="ok primary" id="connect">Verbinden</button></div>`;
     const hasLocal = Object.keys(B.allDocs?.() || {}).some(p => p.split('/').length === 2);
@@ -129,7 +130,7 @@ function desktopShareUI(box, close, settings) {
       if (JSON.stringify(settings.me) !== before) { await window.desktop.setSettings(settings); location.reload(); } else close();
     };
     box.querySelector('#disconnect').onclick = async () => {
-      const ok = await confirmBox('Verbindung trennen?', 'Die Boards bleiben in der Cloud. Die App zeigt danach wieder die Boards auf diesem PC.', 'Trennen');
+      const ok = await confirmBox('Verbindung trennen?', 'Die Boards bleiben in der Cloud. Die App zeigt danach wieder die Boards auf diesem Gerät.', 'Trennen');
       if (!ok) return;
       delete settings.cloud; settings.noDefaultCloud = true; await window.desktop.setSettings(settings); location.reload();
     };

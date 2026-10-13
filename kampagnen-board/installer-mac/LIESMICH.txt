@@ -1,0 +1,42 @@
+KAMPAGNEN BOARD – Mac
+=====================
+
+Installieren (am zuverlässigsten über das Terminal)
+---------------------------------------------------
+1. Die ZIP-Datei doppelklicken. Es entsteht der Ordner "KampagnenBoard".
+2. Das Programm "Terminal" öffnen: Cmd + Leertaste, "Terminal" tippen, Enter.
+3. Im Terminal  bash  tippen und danach EIN Leerzeichen (noch nicht Enter).
+4. Die Datei "Installieren.command" aus dem Ordner ins Terminal-Fenster ziehen.
+   Dann steht dort etwa:  bash /Users/deinname/Downloads/KampagnenBoard/Installieren.command
+5. Enter drücken.
+
+Der Installer lädt einmalig etwa 100 MB (die Electron-Laufzeit) und erkennt selbst,
+ob dein Mac einen Apple-Chip (M1 bis M4) oder Intel hat. Danach liegt
+"Kampagnen Board" in deinem Programme-Ordner (~/Programme) und startet.
+
+Warum nicht einfach doppelklicken? macOS blockiert Skripte aus dem Internet,
+die nicht bei Apple registriert sind. Über das Terminal geht es auf jedem Mac.
+(Alternativ: Rechtsklick auf Installieren.command > Öffnen > Öffnen. Ab macOS 15
+geht das nur noch über Systemeinstellungen > Datenschutz & Sicherheit > "Trotzdem öffnen".)
+
+Zu zweit live arbeiten
+----------------------
+Die App ist bereits mit eurer Cloud verbunden. Unten links steht dann
+"Mit eurer Cloud verbunden". Name und Farbe stellst du oben rechts unter "Teilen" ein.
+
+Entfernen
+---------
+Genauso wie oben, nur mit "Deinstallieren.command". Deine Boards bleiben erhalten in
+~/Library/Application Support/Kampagnen Board
+
+Tastenkürzel
+------------
+Doppelklick auf leere Fläche   Text schreiben
+T / N / C / L / B              Text, Notiz, Checkliste, Link, Bereich
+Ziehen auf leerer Fläche       Fläche bewegen (oder zwei Finger auf dem Trackpad)
+Shift + Ziehen                 Mehrere auswählen
+Pinch / Cmd + Scrollen         Zoomen
+Cmd + Z / Shift + Cmd + Z      Widerrufen / Wiederholen
+Cmd + D                        Duplizieren
+Backspace                      Löschen
+Cmd + 0                        Alles zeigen

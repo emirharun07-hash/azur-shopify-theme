@@ -15,4 +15,5 @@ contextBridge.exposeInMainWorld('desktop', {
   assetFromBytes: (bytes, ext) => ipcRenderer.invoke('asset:from-bytes', bytes, ext),
   assetRead: (src) => ipcRenderer.invoke('asset:read', src),
   linkMeta: (url) => ipcRenderer.invoke('link:meta', url),
+  onMenu: (fn) => ipcRenderer.on('menu', (_e, cmd) => fn(cmd)),
 });

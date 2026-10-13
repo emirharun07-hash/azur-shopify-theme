@@ -206,7 +206,7 @@ function templateItems() {
   const ziel = I({ type: 'note', color: 'blue', x: -620, y: -230, w: 250, text: 'Zielgruppe\n18 bis 30, urban, kauft über Instagram und TikTok.' });
   const msg = I({ type: 'note', color: 'yellow', x: 330, y: -250, w: 260, text: 'Kernbotschaft\nEin Satz, den jeder nach 3 Sekunden versteht.' });
   const mood = I({ type: 'frame', x: -660, y: 140, w: 480, h: 280, title: 'Moodboard' });
-  const moodN = I({ type: 'note', color: 'gray', x: -630, y: 175, w: 210, text: 'Bilder hier hineinziehen\noder einfügen (Strg + V).' });
+  const moodN = I({ type: 'note', color: 'gray', x: -630, y: 175, w: 210, text: 'Bilder hier hineinziehen\noder einfügen (Strg/⌘ + V).' });
   const kan = I({ type: 'check', x: 330, y: 120, w: 270, title: 'Kanäle', items: [
     { id: uid(), t: 'Instagram Reels', d: true }, { id: uid(), t: 'TikTok Teaser', d: false }, { id: uid(), t: 'Newsletter', d: false }, { id: uid(), t: 'Pop-up Event', d: false }] });
   const ref = I({ type: 'link', x: -150, y: 220, w: 300, url: 'https://www.apple.com/de/', title: 'Referenz: Apple Design' });
@@ -935,10 +935,22 @@ function duplicateSelection() {
 }
 
 /* ---------------- Tastatur ---------------- */
+// Befehle aus dem Mac-Menü (dort laufen Widerrufen, Alles auswählen und Zoom über das Menü).
+function menuCommand(cmd) {
+  const typing = S.editing || document.activeElement?.closest?.('input, textarea, [contenteditable]');
+  if (cmd === 'undo') typing ? document.execCommand('undo') : undo();
+  else if (cmd === 'redo') typing ? document.execCommand('redo') : redo();
+  else if (cmd === 'select-all') { if (typing) document.execCommand('selectAll'); else { S.sel = new Set(S.items.keys()); S.selLink = null; render(); syncSelPresence(); } }
+  else if (cmd === 'new-board' && !S.readOnly) createBoard(false);
+  else if (cmd === 'fit') fitView();
+  else if (cmd === 'zoom-in') zoomBy(1.2);
+  else if (cmd === 'zoom-out') zoomBy(1 / 1.2);
+}
 document.addEventListener('keydown', (e) => {
   if (S.editing || e.target.closest?.('input, textarea, [contenteditable]')) return;
   const mod = e.ctrlKey || e.metaKey;
   const k = e.key.toLowerCase();
+  if (mod && document.documentElement.classList.contains('mac') && ['z', 'a', '0', '=', '+', '-'].includes(k)) return;
   if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
   if (mod && k === 'y') { e.preventDefault(); redo(); return; }
   if (mod && k === 'a') { e.preventDefault(); S.sel = new Set(S.items.keys()); S.selLink = null; render(); syncSelPresence(); return; }
@@ -1233,6 +1245,8 @@ async function boot() {
   applyView();
   B = await window.KB_BACKEND();
   if (B.desktop) document.documentElement.classList.add('desktop');
+  if (B.platform === 'darwin') document.documentElement.classList.add('mac');
+  window.desktop?.onMenu?.(menuCommand);
   S.me = { id: B.me?.id || null, name: B.me?.name || '', color: B.me?.color || '#0071e3' };
   if (B.me?.name) $('#whoami').textContent = B.me.name;
   if (B.canWrite === false) setReadOnly(true);

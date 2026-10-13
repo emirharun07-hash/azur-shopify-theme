@@ -8,7 +8,7 @@ Es gibt zwei Fassungen aus demselben Code:
 
 | Fassung | Speicherung | Teilen |
 |---|---|---|
-| **Windows-App** (`desktop/`) | lokal in `%APPDATA%\Kampagnen Board` oder eigene Supabase-Cloud | Einladungscode |
+| **App für Windows und Mac** (`desktop/`) | lokal in `%APPDATA%\Kampagnen Board` oder eigene Supabase-Cloud | Einladungscode |
 | **claude.ai** (`artifact/index.html`) | claude.ai | „Teilen“ in claude.ai |
 
 ## Aufbau
@@ -37,3 +37,11 @@ cd desktop && npm install && npm start   # Windows-App lokal starten
 
 Daten-Pfade: `boards/{board}`, `boards/{board}/items/{item}`, `boards/{board}/links/{link}`.
 Anwesenheit je Person: `{ pid, cur:[x,y], sel:[ids], drag:[[id,x,y,w,h]], edit }`.
+
+## Mac
+
+`scripts/make-installer-zip-mac.sh` baut `KampagnenBoard-Mac-Installer.zip`. Darin baut
+`Installieren.command` aus der offiziellen Electron-Laufzeit (Apple-Chip oder Intel) die App
+`~/Applications/Kampagnen Board.app` und signiert sie lokal. Daten liegen in
+`~/Library/Application Support/Kampagnen Board`. Auf dem Mac laufen Widerrufen, Alles auswählen
+und Zoom über das App-Menü (`menuCommand` in `src/board.js`).
